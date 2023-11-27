@@ -7,6 +7,7 @@ import time
 
 from src.kesslergame import Scenario, KesslerGame, GraphicsType
 from test_controller import TestController
+from scott_dick_controller import ScottDickController
 from graphics_both import GraphicsBoth
 
 
@@ -29,7 +30,7 @@ game = KesslerGame(settings=game_settings)  # Use this to visualize the game sce
 # game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
 
 pre = time.perf_counter()
-score, perf_data = game.run(scenario=my_test_scenario, controllers=[TestController(), TestController()])
+score, perf_data = game.run(scenario=my_test_scenario, controllers=[TestController(), ScottDickController()])
 
 print('Scenario eval time: '+str(time.perf_counter()-pre))
 print(score.stop_reason)
