@@ -9,13 +9,13 @@ from src.kesslergame import Scenario, KesslerGame, GraphicsType
 from test_controller import TestController
 from scott_dick_controller import ScottDickController
 from graphics_both import GraphicsBoth
-
+from group_12_controller_copy import Group12Controller
 
 my_test_scenario = Scenario(name='Test Scenario',
                             num_asteroids=5, # changed 10 to 5
                             ship_states=[
                                 {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1},
-                                {'position': (600, 400), 'angle': 90, 'lives': 3, 'team': 2},
+                                {'position': (600, 400), 'angle': 90, 'lives': 3, 'team': 2}
                             ],
                             map_size=(1000, 800),
                             time_limit=60,
@@ -30,7 +30,7 @@ game = KesslerGame(settings=game_settings)  # Use this to visualize the game sce
 # game = TrainerEnvironment(settings=game_settings)  # Use this for max-speed, no-graphics simulation
 
 pre = time.perf_counter()
-score, perf_data = game.run(scenario=my_test_scenario, controllers=[TestController(),ScottDickController()])
+score, perf_data = game.run(scenario=my_test_scenario, controllers=[TestController(), Group12Controller()])
 
 print('Scenario eval time: '+str(time.perf_counter()-pre))
 print(score.stop_reason)
