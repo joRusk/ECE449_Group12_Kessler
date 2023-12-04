@@ -69,7 +69,15 @@ class Group12Controller(KesslerController):
         #   and returned as the boolean 'fire'
         ship_fire['N'] = fuzz.trimf(ship_fire.universe, [-1,-1,0.0])
         ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [0.0,1,1]) 
-                
+
+        ship_test_controller_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'ship_test_controller_dist')
+        ship_test_controller_dist['C'] = fuzz.trimf(ship_test_controller_dist.universe, [0, 0, 200])
+        ship_test_controller_dist['F'] = fuzz.trimf(ship_test_controller_dist.universe, [200, 1281, 1281])
+
+        ship_test_controller_angle = ctrl.Antecedent(np.arange(0, 360, 1), 'ship_test_controller_angle')
+        ship_test_controller_angle['Same'] = fuzz.trimf(ship_test_controller_angle.universe, [-5, 0, 5])
+        ship_test_controller_angle['Opposite'] = fuzz.trimf(ship_test_controller_angle.universe, [175, 180, 185])
+
         #Declare each fuzzy rule
         rule1 = ctrl.Rule(bullet_time['L'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['N']))
         rule2 = ctrl.Rule(bullet_time['L'] & theta_delta['NS'], (ship_turn['NS'], ship_fire['Y']))
@@ -86,15 +94,11 @@ class Group12Controller(KesslerController):
         rule13 = ctrl.Rule(bullet_time['S'] & theta_delta['Z'], (ship_turn['Z'], ship_fire['Y']))
         rule14 = ctrl.Rule(bullet_time['S'] & theta_delta['PS'], (ship_turn['PS'], ship_fire['Y']))
         rule15 = ctrl.Rule(bullet_time['S'] & theta_delta['PL'], (ship_turn['PL'], ship_fire['Y']))
-
-        #rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'] & ship_asteroid_angle['Towards'], ship_thrust['RF'])
-        #rule17 = ctrl.Rule(closest_asteroid_ship_dist['C'] & ship_asteroid_angle['Away'], ship_thrust['FF'])
-        #rule18 = ctrl.Rule(closest_asteroid_ship_dist['F'] & ship_asteroid_angle['Towards'], ship_thrust['RS'])
-        #rule19 = ctrl.Rule(closest_asteroid_ship_dist['F'] & ship_asteroid_angle['Away'], ship_thrust['FS'])
         
-        rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'], ship_thrust['RF'])
-        rule17 = ctrl.Rule(closest_asteroid_ship_dist['F'], ship_thrust['FF'])
-
+        rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'], ship_thrust['RS'])
+        rule17 = ctrl.Rule(closest_asteroid_ship_dist['F'], ship_thrust['FS'])
+        rule18 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Same'], ship_thrust['FF'])
+        rule19 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Opposite'], ship_thrust['RF'])
 
         #DEBUG
         #bullet_time.view()
