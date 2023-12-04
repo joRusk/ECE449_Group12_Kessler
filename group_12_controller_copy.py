@@ -5,6 +5,7 @@
 # Demonstration of a fuzzy tree-based controller for Kessler Game.
 # Please see the Kessler Game Development Guide by Dr. Scott Dick for a
 #   detailed discussion of this source code.
+import EasyGA
 
 from src.kesslergame import KesslerController
 from typing import Dict, Tuple
@@ -23,62 +24,74 @@ class Group12Controller(KesslerController):
     
         
     def __init__(self):
-        self.eval_frames = 0 #What is this?
+        self.eval_frames = 0 # What is this?
 
-        # self.targeting_control is the targeting rulebase, which is static in this controller.      
-        # Declare variables
+        ga = EasyGA.GA()
+
+        ga.chromosome_length = 11
+        ga.population_size = 10 # this is chosen completely randomly lol
+        ga.generation_goal = 10 # this is chosen completely randomly lol
+        ga.target_fitness_type = 'max'
+        ga.gene_impl = lambda: self.generate_chromosome()
+        ga.fitness_function_impl = self.fitness
+        # chromosome for thrust, turn_rate, fire
+
+    def generate_chromosome(self):
+        return 0
+
+    def fitness(self, chromosome):
+        return 0
+
+    def set_up_fuzzy_system(self, chromosome):
         bullet_time = ctrl.Antecedent(np.arange(0,1.0,0.002), 'bullet_time')
-        theta_delta = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'theta_delta') # Radians due to Python
-        closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'closest_asteroid_ship_dist')
-        #ship_asteroid_angle = ctrl.Antecedent()
-
-        ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
-        ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
-        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
-        
-        closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
-        closest_asteroid_ship_dist['F'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [100, 1281, 1281])
-
-        # Optimize membership parameters with genetic algorithm
-        # Declare fuzzy sets for ship_thrust (velocity the ship will go)
-        ship_thrust['RF'] = fuzz.trimf(ship_thrust.universe, [-500, -500, -250])
-        ship_thrust['RS'] = fuzz.trimf(ship_thrust.universe, [-250, -100, 0])
-        ship_thrust['FS'] = fuzz.trimf(ship_thrust.universe, [0, 100, 250])
-        ship_thrust['FF'] = fuzz.trimf(ship_thrust.universe, [250, 500, 500])
-
-        #Declare fuzzy sets for bullet_time (how long it takes for the bullet to reach the intercept point)
+        # Declare fuzzy sets for bullet_time (how long it takes for the bullet to reach the intercept point)
         bullet_time['S'] = fuzz.trimf(bullet_time.universe,[0,0,0.05])
         bullet_time['M'] = fuzz.trimf(bullet_time.universe, [0,0.05,0.1])
-        bullet_time['L'] = fuzz.smf(bullet_time.universe,0.0,0.1)
-        
-        #Declare fuzzy sets for theta_delta (degrees of turn needed to reach the calculated firing angle)
-        theta_delta['NL'] = fuzz.zmf(theta_delta.universe, -1*math.pi/3,-1*math.pi/6)
+        bullet_time['L'] = fuzz.smf(bullet_time.universe,[0.0,0.1])
+
+        theta_delta = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'theta_delta') # Radians due to Python
+        # Declare fuzzy sets for theta_delta (degrees of turn needed to reach the calculated firing angle)
+        theta_delta['NL'] = fuzz.zmf(theta_delta.universe, [-1*math.pi/3,-1*math.pi/6])
         theta_delta['NS'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/3,-1*math.pi/6,0])
         theta_delta['Z'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/6,0,math.pi/6])
         theta_delta['PS'] = fuzz.trimf(theta_delta.universe, [0,math.pi/6,math.pi/3])
-        theta_delta['PL'] = fuzz.smf(theta_delta.universe,math.pi/6,math.pi/3)
-        
-        #Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
-        ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [-180,-180,-30])
-        ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [-90,-30,0])
-        ship_turn['Z'] = fuzz.trimf(ship_turn.universe, [-30,0,30])
-        ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [0,30,90])
-        ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [30,180,180])
-        
-        #Declare singleton fuzzy sets for the ship_fire consequent; -1 -> don't fire, +1 -> fire; this will be  thresholded
+        theta_delta['PL'] = fuzz.smf(theta_delta.universe,[math.pi/6,math.pi/3])
+
+        closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'closest_asteroid_ship_dist')
+        closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
+        closest_asteroid_ship_dist['F'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [100, 1281, 1281])
+
+        ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
+        # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
+        ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [chromosome[0].value[0], chromosome[0].value[1], chromosome[0].value[2]]) # [-180,-180,-30]
+        ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [chromosome[1].value[0], chromosome[1].value[1], chromosome[1].value[2]]) # [-90,-30,0]
+        ship_turn['Z'] = fuzz.trimf(ship_turn.universe, [chromosome[2].value[0], chromosome[2].value[1], chromosome[2].value[2]]) # [-30,0,30]
+        ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [chromosome[3].value[0], chromosome[3].value[1], chromosome[3].value[2]]) # [0,30,90]
+        ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [chromosome[4].value[0], chromosome[4].value[1], chromosome[4].value[2]]) # [30,180,180]
+
+        ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
+        # Declare singleton fuzzy sets for the ship_fire consequent;
+        # -1 -> don't fire, +1 -> fire; this will be  thresholded
         #   and returned as the boolean 'fire'
-        ship_fire['N'] = fuzz.trimf(ship_fire.universe, [-1,-1,0.0])
-        ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [0.0,1,1]) 
-                
-        #Declare each fuzzy rule
+        ship_fire['N'] = fuzz.trimf(ship_fire.universe, [chromosome[5].value[0],chromosome[5].value[1]]) # [-1,-1,0.0]
+        ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [chromosome[6].value[0],chromosome[6].value[1]]) # [0.0,1,1]
+
+        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
+        # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
+        ship_thrust['RF'] = fuzz.trimf(ship_thrust.universe, [chromosome[7].value[0], chromosome[7].value[1], chromosome[7].value[2]]) # [-500, -500, -250]
+        ship_thrust['RS'] = fuzz.trimf(ship_thrust.universe, [chromosome[8].value[0], chromosome[8].value[1], chromosome[8].value[2]]) # [-250, -100, 0]
+        ship_thrust['FS'] = fuzz.trimf(ship_thrust.universe, [chromosome[9].value[0], chromosome[9].value[1], chromosome[9].value[2]]) # [0, 100, 250]
+        ship_thrust['FF'] = fuzz.trimf(ship_thrust.universe, [chromosome[10].value[0], chromosome[10].value[1], chromosome[10].value[2]]) # [250, 500, 500]
+
+        # Declare each fuzzy rule
         rule1 = ctrl.Rule(bullet_time['L'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['N']))
         rule2 = ctrl.Rule(bullet_time['L'] & theta_delta['NS'], (ship_turn['NS'], ship_fire['Y']))
         rule3 = ctrl.Rule(bullet_time['L'] & theta_delta['Z'], (ship_turn['Z'], ship_fire['Y']))
         rule4 = ctrl.Rule(bullet_time['L'] & theta_delta['PS'], (ship_turn['PS'], ship_fire['Y']))
-        rule5 = ctrl.Rule(bullet_time['L'] & theta_delta['PL'], (ship_turn['PL'], ship_fire['N']))   
+        rule5 = ctrl.Rule(bullet_time['L'] & theta_delta['PL'], (ship_turn['PL'], ship_fire['N']))
         rule6 = ctrl.Rule(bullet_time['M'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['N']))
         rule7 = ctrl.Rule(bullet_time['M'] & theta_delta['NS'], (ship_turn['NS'], ship_fire['Y']))
-        rule8 = ctrl.Rule(bullet_time['M'] & theta_delta['Z'], (ship_turn['Z'], ship_fire['Y']))    
+        rule8 = ctrl.Rule(bullet_time['M'] & theta_delta['Z'], (ship_turn['Z'], ship_fire['Y']))
         rule9 = ctrl.Rule(bullet_time['M'] & theta_delta['PS'], (ship_turn['PS'], ship_fire['Y']))
         rule10 = ctrl.Rule(bullet_time['M'] & theta_delta['PL'], (ship_turn['PL'], ship_fire['N']))
         rule11 = ctrl.Rule(bullet_time['S'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['Y']))
@@ -86,28 +99,9 @@ class Group12Controller(KesslerController):
         rule13 = ctrl.Rule(bullet_time['S'] & theta_delta['Z'], (ship_turn['Z'], ship_fire['Y']))
         rule14 = ctrl.Rule(bullet_time['S'] & theta_delta['PS'], (ship_turn['PS'], ship_fire['Y']))
         rule15 = ctrl.Rule(bullet_time['S'] & theta_delta['PL'], (ship_turn['PL'], ship_fire['Y']))
-
-        #rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'] & ship_asteroid_angle['Towards'], ship_thrust['RF'])
-        #rule17 = ctrl.Rule(closest_asteroid_ship_dist['C'] & ship_asteroid_angle['Away'], ship_thrust['FF'])
-        #rule18 = ctrl.Rule(closest_asteroid_ship_dist['F'] & ship_asteroid_angle['Towards'], ship_thrust['RS'])
-        #rule19 = ctrl.Rule(closest_asteroid_ship_dist['F'] & ship_asteroid_angle['Away'], ship_thrust['FS'])
-        
         rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'], ship_thrust['RF'])
         rule17 = ctrl.Rule(closest_asteroid_ship_dist['F'], ship_thrust['FF'])
 
-
-        #DEBUG
-        #bullet_time.view()
-        #theta_delta.view()
-        #ship_turn.view()
-        #ship_fire.view()
-     
-     
-        
-        # Declare the fuzzy controller, add the rules 
-        # This is an instance variable, and thus available for other methods in the same object. See notes.                         
-        # self.targeting_control = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9, rule10, rule11, rule12, rule13, rule14, rule15])
-             
         self.targeting_control = ctrl.ControlSystem()
         self.targeting_control.addrule(rule1)
         self.targeting_control.addrule(rule2)
@@ -126,8 +120,8 @@ class Group12Controller(KesslerController):
         self.targeting_control.addrule(rule15)
         self.targeting_control.addrule(rule16)
         self.targeting_control.addrule(rule17)
-        
-        
+
+        return self.targeting_control
 
     def actions(self, ship_state: Dict, game_state: Dict) -> Tuple[float, float, bool]:
         """
