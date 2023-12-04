@@ -30,10 +30,10 @@ class Group12Controller(KesslerController):
         bullet_time = ctrl.Antecedent(np.arange(0,1.0,0.002), 'bullet_time')
         theta_delta = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'theta_delta') # Radians due to Python
         closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'closest_asteroid_ship_dist')
-        #ship_asteroid_angle = ctrl.Antecedent()
 
         ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
         ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
+
         ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
         
         closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
@@ -231,6 +231,8 @@ class Group12Controller(KesslerController):
         shooting.input['bullet_time'] = bullet_t
         shooting.input['theta_delta'] = shooting_theta
         shooting.input['closest_asteroid_ship_dist'] = math.sqrt(asteroid_ship_x**2 + asteroid_ship_y**2)
+        # shooting.input['ship_test_controller_dist'] = 
+        # shooting.input['ship_test_controller_angle'] = 
 
         shooting.compute()
         
