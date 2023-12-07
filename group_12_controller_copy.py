@@ -7,7 +7,7 @@
 #   detailed discussion of this source code.
 import EasyGA
 
-from src.kesslergame import KesslerController
+from src.kesslergame import KesslerController, TrainerEnvironment, GraphicsType, Scenario
 from typing import Dict, Tuple
 from cmath import sqrt
 import skfuzzy as fuzz
@@ -24,7 +24,7 @@ class Group12Controller(KesslerController):
         self.eval_frames = 0 # What is this?
 
         ga = EasyGA.GA()
-        ga.gene_impl = lambda: random.uniform(0,1) # so each gene is a value from 0 to 1 (representing 0% to 100%)
+        ga.gene_impl = lambda: self.generate_chromosome() # so each gene is a value from 0 to 1 (representing 0% to 100%)
         ga.chromosome_length = 11
 
         ga.population_size = 10 # this is chosen completely randomly lol
@@ -37,17 +37,35 @@ class Group12Controller(KesslerController):
         ga.print_best_chromosome()
         # chromosome for thrust, turn_rate, fire
     #
-    # def generate_chromosome(self):
-    #     return 0
+    def generate_chromosome(self):
+        a = round(random.uniform(-1, 0.98), 2)
+        b = round(random.uniform(a+0.01, 1), 2)
+        c = round(random.uniform(b+0.01, 1), 2)
+
+        return [a, b, c]
 
     def fitness(self, chromosome):
-        self.set_up_fuzzy_system(chromosome=chromosome)
-        fitness = 0
+        self.set_up_fuzzy_system(chromosome)
 
-        for gene in chromosome.gene_list:
-            if (gene.value >= 0.90):
-                fitness += 1
-        return fitness
+        my_test_scenario = Scenario(name='Train Scenario',
+                            num_asteroids=5, # changed 10 to 5
+                            ship_states=[
+                                {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1}
+                            ],
+                            map_size=(1000, 800),
+                            time_limit=60,
+                            ammo_limit_multiplier=0,
+                            stop_if_no_ammo=False)
+        
+        game_settings = {'perf_tracker': True,
+                 'graphics_type': GraphicsType.Tkinter,
+                 'realtime_multiplier': 1,
+                 'graphics_obj': None}
+        
+        game = TrainerEnvironment(settings=game_settings)
+        score, perf_data = game.run(scenario=my_test_scenario, controllers=[Group12Controller()])
+
+        return score.teams[0].asteroids_hit
 
     def set_up_fuzzy_system(self, chromosome):
         bullet_time = ctrl.Antecedent(np.arange(0,1.0,0.002), 'bullet_time')
@@ -70,11 +88,11 @@ class Group12Controller(KesslerController):
 
         ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
         # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
-        ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [chromosome[0].value[0], chromosome[0].value[1], chromosome[0].value[2]]) # [-180,-180,-30]
-        ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [chromosome[1].value[0], chromosome[1].value[1], chromosome[1].value[2]]) # [-90,-30,0]
-        ship_turn['Z'] = fuzz.trimf(ship_turn.universe, [chromosome[2].value[0], chromosome[2].value[1], chromosome[2].value[2]]) # [-30,0,30]
-        ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [chromosome[3].value[0], chromosome[3].value[1], chromosome[3].value[2]]) # [0,30,90]
-        ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [chromosome[4].value[0], chromosome[4].value[1], chromosome[4].value[2]]) # [30,180,180]
+        ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [180*chromosome[0].value[0], 180*chromosome[0].value[1], 180*chromosome[0].value[2]]) # [-180,-180,-30]
+        ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [180*chromosome[1].value[0], 180*chromosome[1].value[1], 180*chromosome[1].value[2]]) # [-90,-30,0]
+        ship_turn['Z'] = fuzz.trimf(ship_turn.universe, [180*chromosome[2].value[0], 180*chromosome[2].value[1], 180*chromosome[2].value[2]]) # [-30,0,30]
+        ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [180*chromosome[3].value[0], 180*chromosome[3].value[1], 180*chromosome[3].value[2]]) # [0,30,90]
+        ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [180*chromosome[4].value[0], 180*chromosome[4].value[1], 180*chromosome[4].value[2]]) # [30,180,180]
 
         ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
         # Declare singleton fuzzy sets for the ship_fire consequent;
@@ -85,10 +103,10 @@ class Group12Controller(KesslerController):
 
         ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
         # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
-        ship_thrust['RF'] = fuzz.trimf(ship_thrust.universe, [chromosome[7].value[0], chromosome[7].value[1], chromosome[7].value[2]]) # [-500, -500, -250]
-        ship_thrust['RS'] = fuzz.trimf(ship_thrust.universe, [chromosome[8].value[0], chromosome[8].value[1], chromosome[8].value[2]]) # [-250, -100, 0]
-        ship_thrust['FS'] = fuzz.trimf(ship_thrust.universe, [chromosome[9].value[0], chromosome[9].value[1], chromosome[9].value[2]]) # [0, 100, 250]
-        ship_thrust['FF'] = fuzz.trimf(ship_thrust.universe, [chromosome[10].value[0], chromosome[10].value[1], chromosome[10].value[2]]) # [250, 500, 500]
+        ship_thrust['RF'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[7].value[0], 500*chromosome[7].value[1], 500*chromosome[7].value[2]]) # [-500, -500, -250]
+        ship_thrust['RS'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[8].value[0], 500*chromosome[8].value[1], 500*chromosome[8].value[2]]) # [-250, -100, 0]
+        ship_thrust['FS'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[9].value[0], 500*chromosome[9].value[1], 500*chromosome[9].value[2]]) # [0, 100, 250]
+        ship_thrust['FF'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[10].value[0], 500*chromosome[10].value[1], 500*chromosome[10].value[2]]) # [250, 500, 500]
 
         # Declare each fuzzy rule
         rule1 = ctrl.Rule(bullet_time['L'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['N']))
