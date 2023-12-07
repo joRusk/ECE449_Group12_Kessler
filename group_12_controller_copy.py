@@ -50,7 +50,7 @@ class Group12Controller(KesslerController):
         my_test_scenario = Scenario(name='Train Scenario',
                             num_asteroids=5, # changed 10 to 5
                             ship_states=[
-                                {'position': (400, 400), 'angle': 90, 'lives': 3, 'team': 1}
+                                {'position': (600, 400), 'angle': 90, 'lives': 3, 'team': 1}
                             ],
                             map_size=(1000, 800),
                             time_limit=60,
@@ -63,7 +63,7 @@ class Group12Controller(KesslerController):
                  'graphics_obj': None}
         
         game = TrainerEnvironment(settings=game_settings)
-        score, perf_data = game.run(scenario=my_test_scenario, controllers=[Group12Controller()])
+        score, perf_data = game.run(scenario=my_test_scenario, controllers=[self])
 
         return score.teams[0].asteroids_hit
 
@@ -268,3 +268,6 @@ class Group12Controller(KesslerController):
     @property
     def name(self) -> str:
         return "Group 12 Controller"
+    
+if __name__=="__main__":
+    controller = Group12Controller()
