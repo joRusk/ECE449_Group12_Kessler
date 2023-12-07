@@ -14,33 +14,40 @@ import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import math
 import numpy as np
+import random
 import matplotlib as plt
 
 
-
-
 class Group12Controller(KesslerController):
-    
-    
-        
+
     def __init__(self):
         self.eval_frames = 0 # What is this?
 
         ga = EasyGA.GA()
-
+        ga.gene_impl = lambda: random.uniform(0,1) # so each gene is a value from 0 to 1 (representing 0% to 100%)
         ga.chromosome_length = 11
+
         ga.population_size = 10 # this is chosen completely randomly lol
         ga.generation_goal = 10 # this is chosen completely randomly lol
-        ga.target_fitness_type = 'max'
-        ga.gene_impl = lambda: self.generate_chromosome()
-        ga.fitness_function_impl = self.fitness
-        # chromosome for thrust, turn_rate, fire
 
-    def generate_chromosome(self):
-        return 0
+        ga.target_fitness_type = 'max'
+        ga.fitness_function_impl = self.fitness
+
+        ga.evolve()
+        ga.print_best_chromosome()
+        # chromosome for thrust, turn_rate, fire
+    #
+    # def generate_chromosome(self):
+    #     return 0
 
     def fitness(self, chromosome):
-        return 0
+        self.set_up_fuzzy_system(chromosome=chromosome)
+        fitness = 0
+
+        for gene in chromosome.gene_list:
+            if (gene.value >= 0.90):
+                fitness += 1
+        return fitness
 
     def set_up_fuzzy_system(self, chromosome):
         bullet_time = ctrl.Antecedent(np.arange(0,1.0,0.002), 'bullet_time')
@@ -120,8 +127,6 @@ class Group12Controller(KesslerController):
         self.targeting_control.addrule(rule15)
         self.targeting_control.addrule(rule16)
         self.targeting_control.addrule(rule17)
-
-        return self.targeting_control
 
     def actions(self, ship_state: Dict, game_state: Dict) -> Tuple[float, float, bool]:
         """
