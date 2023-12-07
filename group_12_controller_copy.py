@@ -75,8 +75,8 @@ class Group12Controller(KesslerController):
         ship_test_controller_dist['F'] = fuzz.trimf(ship_test_controller_dist.universe, [200, 1281, 1281])
 
         ship_test_controller_angle = ctrl.Antecedent(np.arange(0, 360, 1), 'ship_test_controller_angle')
-        ship_test_controller_angle['Same'] = fuzz.trimf(ship_test_controller_angle.universe, [-5, 0, 5])
-        ship_test_controller_angle['Opposite'] = fuzz.trimf(ship_test_controller_angle.universe, [175, 180, 185])
+        ship_test_controller_angle['Same'] = fuzz.trimf(ship_test_controller_angle.universe, [-20, 0, 20])
+        ship_test_controller_angle['Opposite'] = fuzz.trimf(ship_test_controller_angle.universe, [160, 180, 200])
 
         #Declare each fuzzy rule
         rule1 = ctrl.Rule(bullet_time['L'] & theta_delta['NL'], (ship_turn['NL'], ship_fire['N']))
@@ -97,8 +97,8 @@ class Group12Controller(KesslerController):
         
         rule16 = ctrl.Rule(closest_asteroid_ship_dist['C'], ship_thrust['RS'])
         rule17 = ctrl.Rule(closest_asteroid_ship_dist['F'], ship_thrust['FS'])
-        rule18 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Same'], ship_thrust['FF'])
-        rule19 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Opposite'], ship_thrust['RF'])
+        rule18 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Same'], ship_thrust['FS'])
+        rule19 = ctrl.Rule(ship_test_controller_dist['C'] & ship_test_controller_angle['Opposite'], ship_thrust['RS'])
 
         #DEBUG
         #bullet_time.view()
@@ -130,6 +130,8 @@ class Group12Controller(KesslerController):
         self.targeting_control.addrule(rule15)
         self.targeting_control.addrule(rule16)
         self.targeting_control.addrule(rule17)
+        self.targeting_control.addrule(rule18)
+        self.targeting_control.addrule(rule19)
         
         
 
@@ -231,8 +233,18 @@ class Group12Controller(KesslerController):
         shooting.input['bullet_time'] = bullet_t
         shooting.input['theta_delta'] = shooting_theta
         shooting.input['closest_asteroid_ship_dist'] = math.sqrt(asteroid_ship_x**2 + asteroid_ship_y**2)
-        # shooting.input['ship_test_controller_dist'] = 
-        # shooting.input['ship_test_controller_angle'] = 
+        shooting.input['ship_test_controller_dist'] = math.sqrt((ship_pos_x - 400)**2 + (ship_pos_y - 400)**2)
+
+        # ANGLE IN RADIANS
+        ship_tc_angle_radians = math.atan2(ship_pos_y-400, ship_pos_x-400)
+
+        if ship_tc_angle_radians < 0:
+            ship_tc_angle_radians += 2*math.pi
+
+        # Angle in degrees
+        ship_angle = ship_state['heading']
+
+        shooting.input['ship_test_controller_angle'] = round(ship_angle - ship_tc_angle_radians * 180 / math.pi)
 
         shooting.compute()
         
