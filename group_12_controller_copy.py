@@ -72,15 +72,15 @@ class Group12Controller(KesslerController):
         # Declare fuzzy sets for bullet_time (how long it takes for the bullet to reach the intercept point)
         bullet_time['S'] = fuzz.trimf(bullet_time.universe,[0,0,0.05])
         bullet_time['M'] = fuzz.trimf(bullet_time.universe, [0,0.05,0.1])
-        bullet_time['L'] = fuzz.smf(bullet_time.universe,[0.0,0.1])
+        bullet_time['L'] = fuzz.smf(bullet_time.universe,0.0,0.1)
 
         theta_delta = ctrl.Antecedent(np.arange(-1*math.pi,math.pi,0.1), 'theta_delta') # Radians due to Python
         # Declare fuzzy sets for theta_delta (degrees of turn needed to reach the calculated firing angle)
-        theta_delta['NL'] = fuzz.zmf(theta_delta.universe, [-1*math.pi/3,-1*math.pi/6])
+        theta_delta['NL'] = fuzz.zmf(theta_delta.universe, -1*math.pi/3,-1*math.pi/6)
         theta_delta['NS'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/3,-1*math.pi/6,0])
         theta_delta['Z'] = fuzz.trimf(theta_delta.universe, [-1*math.pi/6,0,math.pi/6])
         theta_delta['PS'] = fuzz.trimf(theta_delta.universe, [0,math.pi/6,math.pi/3])
-        theta_delta['PL'] = fuzz.smf(theta_delta.universe,[math.pi/6,math.pi/3])
+        theta_delta['PL'] = fuzz.smf(theta_delta.universe,math.pi/6,math.pi/3)
 
         closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'closest_asteroid_ship_dist')
         closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
@@ -98,8 +98,8 @@ class Group12Controller(KesslerController):
         # Declare singleton fuzzy sets for the ship_fire consequent;
         # -1 -> don't fire, +1 -> fire; this will be  thresholded
         #   and returned as the boolean 'fire'
-        ship_fire['N'] = fuzz.trimf(ship_fire.universe, [chromosome[5].value[0],chromosome[5].value[1]]) # [-1,-1,0.0]
-        ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [chromosome[6].value[0],chromosome[6].value[1]]) # [0.0,1,1]
+        ship_fire['N'] = fuzz.trimf(ship_fire.universe, [chromosome[5].value[0],chromosome[5].value[0],chromosome[5].value[1]]) # [-1,-1,0.0]
+        ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [chromosome[6].value[0],chromosome[6].value[1],chromosome[6].value[1]]) # [0.0,1,1]
 
         ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
         # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
