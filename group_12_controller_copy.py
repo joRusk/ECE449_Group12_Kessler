@@ -24,7 +24,7 @@ class Group12Controller(KesslerController):
         self.eval_frames = 0 # What is this?
 
         ga = EasyGA.GA()
-        ga.gene_impl = lambda: self.generate_chromosome() # so each gene is a value from 0 to 1 (representing 0% to 100%)
+        ga.gene_impl = lambda: self.generate_chromosome()
         ga.chromosome_length = 11
 
         ga.population_size = 10 # this is chosen completely randomly lol
@@ -35,8 +35,7 @@ class Group12Controller(KesslerController):
 
         ga.evolve()
         ga.print_best_chromosome()
-        # chromosome for thrust, turn_rate, fire
-    #
+        
     def generate_chromosome(self):
         a = round(random.uniform(-1, 0.98), 2)
         b = round(random.uniform(a+0.01, 1), 2)
@@ -82,11 +81,11 @@ class Group12Controller(KesslerController):
         theta_delta['PS'] = fuzz.trimf(theta_delta.universe, [0,math.pi/6,math.pi/3])
         theta_delta['PL'] = fuzz.smf(theta_delta.universe,math.pi/6,math.pi/3)
 
-        closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 1), 'closest_asteroid_ship_dist')
+        closest_asteroid_ship_dist = ctrl.Antecedent(np.arange(0, 1281, 0.01), 'closest_asteroid_ship_dist')
         closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
         closest_asteroid_ship_dist['F'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [100, 1281, 1281])
 
-        ship_turn = ctrl.Consequent(np.arange(-180,180,1), 'ship_turn') # Degrees due to Kessler
+        ship_turn = ctrl.Consequent(np.arange(-180,180,0.01), 'ship_turn') # Degrees due to Kessler
         # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
         ship_turn['NL'] = fuzz.trimf(ship_turn.universe, [180*chromosome[0].value[0], 180*chromosome[0].value[1], 180*chromosome[0].value[2]]) # [-180,-180,-30]
         ship_turn['NS'] = fuzz.trimf(ship_turn.universe, [180*chromosome[1].value[0], 180*chromosome[1].value[1], 180*chromosome[1].value[2]]) # [-90,-30,0]
@@ -94,14 +93,14 @@ class Group12Controller(KesslerController):
         ship_turn['PS'] = fuzz.trimf(ship_turn.universe, [180*chromosome[3].value[0], 180*chromosome[3].value[1], 180*chromosome[3].value[2]]) # [0,30,90]
         ship_turn['PL'] = fuzz.trimf(ship_turn.universe, [180*chromosome[4].value[0], 180*chromosome[4].value[1], 180*chromosome[4].value[2]]) # [30,180,180]
 
-        ship_fire = ctrl.Consequent(np.arange(-1,1,0.1), 'ship_fire')
+        ship_fire = ctrl.Consequent(np.arange(-1,1,0.01), 'ship_fire')
         # Declare singleton fuzzy sets for the ship_fire consequent;
         # -1 -> don't fire, +1 -> fire; this will be  thresholded
         #   and returned as the boolean 'fire'
         ship_fire['N'] = fuzz.trimf(ship_fire.universe, [chromosome[5].value[0],chromosome[5].value[0],chromosome[5].value[1]]) # [-1,-1,0.0]
         ship_fire['Y'] = fuzz.trimf(ship_fire.universe, [chromosome[6].value[0],chromosome[6].value[1],chromosome[6].value[1]]) # [0.0,1,1]
 
-        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
+        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 0.01), 'ship_thrust')
         # Declare fuzzy sets for the ship_turn consequent; this will be returned as turn_rate.
         ship_thrust['RF'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[7].value[0], 500*chromosome[7].value[1], 500*chromosome[7].value[2]]) # [-500, -500, -250]
         ship_thrust['RS'] = fuzz.trimf(ship_thrust.universe, [500*chromosome[8].value[0], 500*chromosome[8].value[1], 500*chromosome[8].value[2]]) # [-250, -100, 0]
