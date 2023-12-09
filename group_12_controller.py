@@ -1,6 +1,5 @@
 # ECE 449 Intelligent Systems Engineering
 # Fall 2023
-# Dr. Scott Dick
 
 # Demonstration of a fuzzy tree-based controller for Kessler Game.
 # Please see the Kessler Game Development Guide by Dr. Scott Dick for a
@@ -30,10 +29,10 @@ class Group12Controller(KesslerController):
         ship_turn = ctrl.Consequent(np.arange(-180, 180, 1), 'ship_turn')  # Degrees due to Kessler
         ship_fire = ctrl.Consequent(np.arange(-1, 1, 0.1), 'ship_fire')
 
-        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 10), 'ship_thrust')
+        ship_thrust = ctrl.Consequent(np.arange(-500, 500, 1), 'ship_thrust')
 
         closest_asteroid_ship_dist['C'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [0, 0, 100])
-        closest_asteroid_ship_dist['F'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [100, 1281, 1281])
+        closest_asteroid_ship_dist['F'] = fuzz.trimf(closest_asteroid_ship_dist.universe, [95, 1281, 1281])
 
         # Optimize membership parameters with genetic algorithm
         # Declare fuzzy sets for ship_thrust (velocity the ship will go)
@@ -215,7 +214,7 @@ class Group12Controller(KesslerController):
 
         shooting.input['bullet_time'] = bullet_t
         shooting.input['theta_delta'] = shooting_theta
-        shooting.input['closest_asteroid_ship_dist'] = math.sqrt(asteroid_ship_x ** 2 + asteroid_ship_y ** 2)
+        shooting.input['closest_asteroid_ship_dist'] = round(math.sqrt(asteroid_ship_x ** 2 + asteroid_ship_y ** 2))
 
         shooting.compute()
 
